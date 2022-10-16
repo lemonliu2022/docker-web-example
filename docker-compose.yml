@@ -1,0 +1,40 @@
+# 版本
+version: '3'
+# 依赖的服务列表
+services:
+  nginx:
+    # base镜像
+    image: nginx:latest
+    # 将服务的80端口映射宿主机的8080端口，使用-80可以将服务的80端口映射到宿主机的一个随机的端口上
+    ports:
+      - 8080:80
+    # 出错重启
+    restart: always  
+    volumes:
+    # 文件映射
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - /tmp/logs:/var/log/nginx
+
+  redis-server:
+    image: redis:latest
+    ports:
+      - 6479:6379
+    restart: always
+
+  app:
+    # 服务路径
+    build: ./
+    volumes:
+      - ./:/usr/local/app
+    restart: always  
+    working_dir: /usr/local/app
+    command: node server/server.js
+    # 通过depends_on告诉docker-compose当前服务启动之前先要把depends_on指定的服务启动起来才行。
+    depends_on:
+      - redis-server
+    links:
+    # links的目的是把一个服务的名称在当前服务里面创建一个别名，此时在app中的redis的ip为rd
+      - redis-server:rd
+
+      
